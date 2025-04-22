@@ -24,7 +24,7 @@ const ClientesList = () => {
       }
       const response = await apiClient.get(url);
       setClientes(response.data.results || response.data);
-      
+      console.log(response)
       // Configurar paginación si la API devuelve esa información
       if (response.data.count) {
         setTotalPages(Math.ceil(response.data.count / 10)); // Asumiendo 10 por página
@@ -105,7 +105,7 @@ const ClientesList = () => {
                   <td className="px-6 py-4 whitespace-nowrap">{cliente.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{cliente.nombre}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{cliente.numero || 'N/A'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{cliente.usuario?.username || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{cliente.usuario_id || 'N/A'}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{cliente.points}</td>
                   <td className="px-6 py-4 whitespace-nowrap space-x-2">
                     <HasPermission requiredPermission="usuarios.view_cliente">

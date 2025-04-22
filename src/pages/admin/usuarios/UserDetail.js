@@ -16,7 +16,7 @@ const UserDetail = () => {
     const fetchUserData = async () => {
       try {
         setLoading(true);
-        const response = await apiClient.get(`/admin/users/${id}/`);
+        const response = await apiClient.get(`/usuarios/users/${id}/`);
         setUser(response.data);
         setLoading(false);
       } catch (err) {
@@ -30,7 +30,7 @@ const UserDetail = () => {
 
   const handleStatusChange = async () => {
     try {
-      const response = await apiClient.patch(`/admin/users/${id}/status/`, {
+      const response = await apiClient.patch(`/usuarios/users/${id}/status/`, {
         is_active: !user.is_active
       });
       setUser({
@@ -46,7 +46,7 @@ const UserDetail = () => {
     if (window.confirm('¿Estás seguro de generar una nueva contraseña para este usuario? Se enviará por correo electrónico.')) {
       try {
         setPasswordResetInProgress(true);
-        const response = await apiClient.post(`/admin/users/${id}/reset-password/`);
+        const response = await apiClient.post(`/usuarios/users/${id}/reset-password/`);
         setResetPasswordMessage(response.data.message || 'Se ha enviado una nueva contraseña al correo del usuario.');
         setPasswordResetInProgress(false);
       } catch (err) {
@@ -59,8 +59,8 @@ const UserDetail = () => {
   const handleDelete = async () => {
     if (window.confirm('¿Estás seguro de eliminar este usuario? Esta acción no se puede deshacer.')) {
       try {
-        await apiClient.delete(`/admin/users/${id}/`);
-        navigate('/admin/usuarios/administradores');
+        await apiClient.delete(`/usuarios/user/${id}/`);
+        navigate('/admin/usuarios/usuarios');
       } catch (err) {
         setError('Error al eliminar el usuario: ' + (err.response?.data?.detail || err.message));
       }
@@ -78,11 +78,11 @@ const UserDetail = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Detalle del Usuario: {user.username}</h1>
         <div className="space-x-2">
-          <Link to="/admin/usuarios/administradores" className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
+          <Link to="/admin/usuarios/usuarios" className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
             Volver
           </Link>
           <HasPermission requiredPermission="auth.change_user">
-            <Link to={`/admin/usuarios/administradores/${id}/editar`} className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">
+            <Link to={`/admin/usuarios/usuarios/${id}/editar`} className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">
               Editar
             </Link>
           </HasPermission>
@@ -164,6 +164,7 @@ const UserDetail = () => {
               </button>
             </HasPermission>
           </div>
+          
         </div>
 
         {/* Grupos y permisos */}
@@ -175,16 +176,19 @@ const UserDetail = () => {
             {user.groups && user.groups.length > 0 ? (
               <div className="space-y-2">
                 {user.groups.map((group, idx) => (
+                  // console.log('group: ',user.groups),
                   <div key={idx} className="flex justify-between items-center bg-gray-50 p-3 rounded">
                     <span className="font-medium">{group.name}</span>
                     <HasPermission requiredPermission="auth.view_group">
-                      <Link to={`/admin/usuarios/grupos/${group.id}`} className="text-blue-600 hover:text-blue-800 text-sm">
+                      <Link to={`/admin/usuarios/grupos/${idx+1}`} className="text-blue-600 hover:text-blue-800 text-sm">
                         Ver grupo
+                        
                       </Link>
                     </HasPermission>
                   </div>
                 ))}
               </div>
+              
             ) : (
               <p className="text-gray-500">El usuario no pertenece a ningún grupo</p>
             )}

@@ -1,3 +1,4 @@
+///src/pages/admin/usuarios/GroupList
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../../../api/axiosConfig';
@@ -15,19 +16,24 @@ const GroupsList = () => {
   const fetchGroups = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/admin/groups/');
-      setGroups(response.data);
+      const response = await apiClient.get('/usuarios/grupos/');
+      console.log('API response:', response.data); // Para ver qué estás recibiendo
+
+      // Asegúrate de que groups sea un array
+      const groupsArray = Array.isArray(response.data) ? response.data :
+        (response.data.results ? response.data.results : []);
+
+      setGroups(groupsArray);
       setLoading(false);
     } catch (err) {
       setError('Error al cargar los grupos: ' + (err.response?.data?.detail || err.message));
       setLoading(false);
     }
   };
-
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de eliminar este grupo? Esta acción no se puede deshacer y podría afectar a usuarios.')) {
       try {
-        await apiClient.delete(`/admin/groups/${id}/`);
+        await apiClient.delete(`/usuarios/grupos/${id}/`);
         // Recargar la lista de grupos
         fetchGroups();
       } catch (err) {
@@ -37,7 +43,7 @@ const GroupsList = () => {
   };
 
   if (loading) return <div className="flex justify-center p-6"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div></div>;
-  
+
   if (error) return <div className="text-red-500 p-4 text-center">{error}</div>;
 
   return (
@@ -60,7 +66,7 @@ const GroupsList = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuarios</th>
+                {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuarios</th> */}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permisos</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
@@ -70,9 +76,9 @@ const GroupsList = () => {
                 <tr key={group.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">{group.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap font-medium">{group.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  {/* <td className="px-6 py-4 whitespace-nowrap">
                     {group.user_count || '0'} usuarios
-                  </td>
+                  </td> */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     {group.permissions?.length || '0'} permisos
                   </td>
@@ -88,8 +94,8 @@ const GroupsList = () => {
                       </Link>
                     </HasPermission>
                     <HasPermission requiredPermission="auth.delete_group">
-                      <button 
-                        onClick={() => handleDelete(group.id)} 
+                      <button
+                        onClick={() => handleDelete(group.id)}
                         className="text-red-600 hover:text-red-900">
                         Eliminar
                       </button>

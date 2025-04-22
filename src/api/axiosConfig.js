@@ -42,18 +42,21 @@ apiClient.interceptors.response.use(
           return Promise.reject(error);
         }
 
-        const response = await axios.post('http://127.0.0.1:8000/api/token/refresh/', {
-          refresh: refreshToken
-        });
+        const response = await axios.post(
+          `${apiClient.defaults.baseURL}token/refresh/`,
+          {
+            refresh: refreshToken
+          }
+        );
 
         const { access } = response.data;
         localStorage.setItem('accessToken', access);
-        
+
         // Actualizado para usar setCredentials en lugar de setToken
         // Estamos manteniendo la estructura actual del usuario y actualizando solo los tokens
         const state = store.getState();
         const currentUser = state.auth.user;
-        
+
         store.dispatch(
           setCredentials({
             user: currentUser,
@@ -63,7 +66,7 @@ apiClient.interceptors.response.use(
             }
           })
         );
-        
+
         originalRequest.headers.Authorization = `Bearer ${access}`;
         return apiClient(originalRequest);
       } catch (refreshError) {

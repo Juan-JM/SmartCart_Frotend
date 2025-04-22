@@ -1,3 +1,4 @@
+//src/pages/admin/usuarios/groupdetail
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import apiClient from '../../../api/axiosConfig';
@@ -16,13 +17,14 @@ const GroupDetail = () => {
       try {
         setLoading(true);
         // Obtener detalles del grupo
-        const groupResponse = await apiClient.get(`/admin/groups/${id}/`);
+        const groupResponse = await apiClient.get(`/usuarios/grupos/${id}/`);
+        console.log('groupResponse ', groupResponse.data);
         setGroup(groupResponse.data);
-        
+
         // Obtener usuarios que pertenecen al grupo
-        const usersResponse = await apiClient.get(`/admin/groups/${id}/users/`);
+        const usersResponse = await apiClient.get(`/usuarios/grupos/${id}/`);
         setGroupUsers(usersResponse.data);
-        
+
         setLoading(false);
       } catch (err) {
         setError('Error al cargar los datos del grupo: ' + (err.response?.data?.detail || err.message));
@@ -36,7 +38,7 @@ const GroupDetail = () => {
   const handleDelete = async () => {
     if (window.confirm('¿Estás seguro de eliminar este grupo? Esta acción no se puede deshacer y podría afectar a usuarios.')) {
       try {
-        await apiClient.delete(`/admin/groups/${id}/`);
+        await apiClient.delete(`/usuarios/grupos/${id}/`);
         navigate('/admin/usuarios/grupos');
       } catch (err) {
         setError('Error al eliminar el grupo: ' + (err.response?.data?.detail || err.message));
@@ -45,21 +47,24 @@ const GroupDetail = () => {
   };
 
   if (loading) return <div className="flex justify-center p-6"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div></div>;
-  
+
   if (error) return <div className="text-red-500 p-4 text-center">{error}</div>;
-  
+
   if (!group) return <div className="text-center p-4">Grupo no encontrado</div>;
 
   // Agrupar permisos por aplicación
   const permissionsByApp = {};
   if (group.permissions && group.permissions.length > 0) {
+    // console.log('group ', group.permissions);
     group.permissions.forEach(perm => {
-      const [app, action] = perm.split('.');
+      const app = 'permissions'
+      //const [app, action] = permission.split('.');
       if (!permissionsByApp[app]) {
         permissionsByApp[app] = [];
       }
-      permissionsByApp[app].push(action);
+      permissionsByApp[app].push(perm.codename);
     });
+    // console.log('permissionsByApp ',permissionsByApp)
   }
 
   return (
@@ -76,7 +81,7 @@ const GroupDetail = () => {
             </Link>
           </HasPermission>
           <HasPermission requiredPermission="auth.delete_group">
-            <button 
+            <button
               onClick={handleDelete}
               className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
               Eliminar
@@ -112,7 +117,7 @@ const GroupDetail = () => {
             <div className="space-y-4">
               {Object.entries(permissionsByApp).map(([app, actions]) => (
                 <div key={app} className="border-b pb-3 last:border-b-0">
-                  <h3 className="font-medium text-lg mb-2 capitalize">{app}</h3>
+                  {/* <h3 className="font-medium text-lg mb-2 capitalize">{app}</h3> */}
                   <ul className="list-disc pl-5 space-y-1">
                     {actions.map((action, index) => (
                       <li key={index} className="text-sm text-gray-700">{action}</li>
@@ -153,8 +158,8 @@ const GroupDetail = () => {
                     <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <HasPermission requiredPermission="auth.view_user">
-                        <Link 
-                          to={user.is_staff ? `/admin/usuarios/personals/${user.personal_id}` : `/admin/usuarios/clientes/${user.cliente_id}`} 
+                        <Link
+                          to={user.is_staff ? `/admin/usuarios/personals/${user.personal_id}` : `/admin/usuarios/clientes/${user.cliente_id}`}
                           className="text-blue-600 hover:text-blue-900">
                           Ver perfil
                         </Link>

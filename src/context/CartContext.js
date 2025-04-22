@@ -1,159 +1,148 @@
 // src/context/CartContext.js
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import apiClient from '../api/axiosConfig';
 
-// Estado inicial del carrito
-const initialState = {
-  items: [],
-  total: 0
-};
+// Constante para la URL base de la API
+const API_BASE_URL = apiClient.defaults.baseURL.replace('/api/', '');
 
-// Crear contexto
+// Crear el contexto del carrito
 const CartContext = createContext();
 
-// Tipos de acciones
-const ADD_ITEM = 'ADD_ITEM';
-const REMOVE_ITEM = 'REMOVE_ITEM';
-const UPDATE_QUANTITY = 'UPDATE_QUANTITY';
-const CLEAR_CART = 'CLEAR_CART';
+// Hook personalizado para usar el contexto del carrito
+export const useCart = () => {
+  return useContext(CartContext);
+};
 
-// Reductor para manipular el estado del carrito
-const cartReducer = (state, action) => {
-  switch (action.type) {
-    case ADD_ITEM: {
-      const existingItemIndex = state.items.findIndex(
-        item => item.id === action.payload.id
-      );
+// Proveedor del contexto del carrito
+export const CartProvider = ({ children }) => {
+  // Estado del carrito
+  const [cart, setCart] = useState(() => {
+    // Intentar cargar el carrito desde localStorage al iniciar
+    const savedCart = localStorage.getItem('cart');
+    return savedCart ? JSON.parse(savedCart) : { items: [], total: 0 };
+  });
+
+  // Guardar el carrito en localStorage cada vez que cambie
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
+
+  // Función para normalizar la URL de imagen
+  const normalizeImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    
+    // Si la URL ya es absoluta (comienza con http o https), devolverla como está
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    
+    // Si la URL es relativa (comienza con /media/), añadir la URL base
+    if (imageUrl.startsWith('/media/')) {
+      return `${API_BASE_URL}${imageUrl}`;
+    }
+    
+    // Si la URL no tiene ningún formato esperado, asumimos que es relativa
+    return `${API_BASE_URL}${imageUrl}`;
+  };
+
+  // Añadir un producto al carrito
+  const addItem = (product, quantity = 1) => {
+    setCart(prevCart => {
+      // Buscar si el producto ya está en el carrito
+      const existingItemIndex = prevCart.items.findIndex(item => item.id === product.id);
+      
+      // Normalizar la URL de la imagen
+      const normalizedImageUrl = normalizeImageUrl(product.imagen || product.image);
       
       if (existingItemIndex >= 0) {
-        // El producto ya existe en el carrito, actualizar cantidad
-        const updatedItems = [...state.items];
-        updatedItems[existingItemIndex] = {
-          ...updatedItems[existingItemIndex],
-          quantity: updatedItems[existingItemIndex].quantity + action.payload.quantity
-        };
+        // Si el producto ya está en el carrito, actualizar la cantidad
+        const updatedItems = [...prevCart.items];
+        updatedItems[existingItemIndex].quantity += quantity;
+        
+        // Recalcular el total
+        const newTotal = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         
         return {
-          ...state,
           items: updatedItems,
-          total: calculateTotal(updatedItems)
+          total: newTotal
         };
       } else {
-        // Nuevo producto
-        const newItems = [...state.items, action.payload];
+        // Si el producto no está en el carrito, añadirlo
+        const newItem = {
+          id: product.id,
+          name: product.nombre || product.name,
+          price: parseFloat(product.precio || product.price),
+          image: normalizedImageUrl,
+          quantity: quantity
+        };
+        
+        // Añadir el nuevo producto y recalcular el total
+        const updatedItems = [...prevCart.items, newItem];
+        const newTotal = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        
         return {
-          ...state,
-          items: newItems,
-          total: calculateTotal(newItems)
+          items: updatedItems,
+          total: newTotal
         };
       }
-    }
-    
-    case REMOVE_ITEM: {
-      const updatedItems = state.items.filter(item => item.id !== action.payload);
+    });
+  };
+
+  // Eliminar un producto del carrito
+  const removeItem = (productId) => {
+    setCart(prevCart => {
+      // Filtrar el producto a eliminar
+      const updatedItems = prevCart.items.filter(item => item.id !== productId);
+      
+      // Recalcular el total
+      const newTotal = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      
       return {
-        ...state,
         items: updatedItems,
-        total: calculateTotal(updatedItems)
+        total: newTotal
       };
-    }
+    });
+  };
+
+  // Actualizar la cantidad de un producto
+  const updateQuantity = (productId, newQuantity) => {
+    if (newQuantity < 1) return;
     
-    case UPDATE_QUANTITY: {
-      const updatedItems = state.items.map(item => 
-        item.id === action.payload.id 
-          ? { ...item, quantity: action.payload.quantity }
-          : item
+    setCart(prevCart => {
+      // Buscar el producto a actualizar
+      const updatedItems = prevCart.items.map(item => 
+        item.id === productId ? { ...item, quantity: newQuantity } : item
       );
       
-      return {
-        ...state,
-        items: updatedItems,
-        total: calculateTotal(updatedItems)
-      };
-    }
-    
-    case CLEAR_CART:
-      return initialState;
+      // Recalcular el total
+      const newTotal = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       
-    default:
-      return state;
-  }
-};
+      return {
+        items: updatedItems,
+        total: newTotal
+      };
+    });
+  };
 
-// Función auxiliar para calcular el total del carrito
-const calculateTotal = (items) => {
-  return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-};
-
-// Proveedor del contexto
-export const CartProvider = ({ children }) => {
-  // Intentar recuperar el carrito del localStorage
-  const getInitialState = () => {
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : initialState;
-  };
-  
-  const [state, dispatch] = useReducer(cartReducer, null, getInitialState);
-  
-  // Guardar el carrito en localStorage cuando cambie
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(state));
-  }, [state]);
-  
-  // Acciones para manipular el carrito
-  const addItem = (product, quantity = 1) => {
-    dispatch({
-      type: ADD_ITEM,
-      payload: {
-        id: product.id,
-        name: product.nombre,
-        price: parseFloat(product.precio),
-        image: product.imagen,
-        quantity
-      }
-    });
-  };
-  
-  const removeItem = (productId) => {
-    dispatch({
-      type: REMOVE_ITEM,
-      payload: productId
-    });
-  };
-  
-  const updateQuantity = (productId, quantity) => {
-    dispatch({
-      type: UPDATE_QUANTITY,
-      payload: {
-        id: productId,
-        quantity: parseInt(quantity)
-      }
-    });
-  };
-  
+  // Vaciar el carrito
   const clearCart = () => {
-    dispatch({ type: CLEAR_CART });
+    setCart({ items: [], total: 0 });
   };
-  
+
+  // Valor a proporcionar al contexto
+  const value = {
+    cart,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart
+  };
+
   return (
-    <CartContext.Provider
-      value={{
-        cart: state,
-        addItem,
-        removeItem,
-        updateQuantity,
-        clearCart
-      }}
-    >
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );
 };
 
-// Hook personalizado para usar el contexto del carrito
-export const useCart = () => {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart debe usarse dentro de un CartProvider');
-  }
-  return context;
-};
+export default CartContext;

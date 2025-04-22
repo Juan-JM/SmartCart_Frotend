@@ -1,3 +1,4 @@
+// src/pages/admin/usuarios.js
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../../../api/axiosConfig';
@@ -24,12 +25,12 @@ const UsersList = () => {
       }
       const response = await apiClient.get(url);
       setUsers(response.data.results || response.data);
-      
+
       // Configurar paginación si la API devuelve esa información
       if (response.data.count) {
         setTotalPages(Math.ceil(response.data.count / 10)); // Asumiendo 10 por página
       }
-      
+
       setLoading(false);
     } catch (err) {
       setError('Error al cargar la lista de usuarios: ' + (err.response?.data?.detail || err.message));
@@ -67,16 +68,16 @@ const UsersList = () => {
   };
 
   if (loading) return <div className="flex justify-center p-6"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div></div>;
-  
+
   if (error) return <div className="text-red-500 p-4 text-center">{error}</div>;
 
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gestión de Usuarios Administradores</h1>
+        <h1 className="text-2xl font-bold">Gestión de Usuarios </h1>
         <HasPermission requiredPermission="auth.add_user">
-          <Link to="/admin/usuarios/administradores/nuevo" className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-            Nuevo Administrador
+          <Link to="/admin/usuarios/usuarios/nuevo" className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+            Nuevo Usuario
           </Link>
         </HasPermission>
       </div>
@@ -97,7 +98,7 @@ const UsersList = () => {
       </form>
 
       {users.length === 0 ? (
-        <div className="text-center p-4 bg-gray-100 rounded">No se encontraron usuarios administradores</div>
+        <div className="text-center p-4 bg-gray-100 rounded">No se encontraron usuarios </div>
       ) : (
         <div className="overflow-x-auto bg-white rounded-lg shadow">
           <table className="min-w-full divide-y divide-gray-200">
@@ -130,11 +131,22 @@ const UsersList = () => {
                         {user.is_active ? 'Activo' : 'Inactivo'}
                       </button>
                     </HasPermission>
-                    {!HasPermission({ requiredPermission: "auth.change_user" }) && (
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {user.is_active ? 'Activo' : 'Inactivo'}
-                      </span>
-                    )}
+
+                    <HasPermission
+                      requiredPermission="auth.change_user"
+                      fallback={
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {user.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                      }
+                    >
+                      <button
+                        onClick={() => handleStatusChange(user.id, user.is_active)}
+                        // className={`px-2 py-1 rounded text-xs font-semibold ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                      >
+                        {/* {user.is_active ? 'Activo' : 'Inactivo'} */}
+                      </button>
+                    </HasPermission>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {user.groups && user.groups.length > 0 ? (
@@ -151,18 +163,18 @@ const UsersList = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap space-x-2">
                     <HasPermission requiredPermission="auth.view_user">
-                      <Link to={`/admin/usuarios/administradores/${user.id}`} className="text-blue-600 hover:text-blue-900">
+                      <Link to={`/admin/usuarios/usuarios/${user.id}`} className="text-blue-600 hover:text-blue-900">
                         Ver
                       </Link>
                     </HasPermission>
                     <HasPermission requiredPermission="auth.change_user">
-                      <Link to={`/admin/usuarios/administradores/${user.id}/editar`} className="text-yellow-600 hover:text-yellow-900">
+                      <Link to={`/admin/usuarios/usuarios/${user.id}/editar`} className="text-yellow-600 hover:text-yellow-900">
                         Editar
                       </Link>
                     </HasPermission>
                     <HasPermission requiredPermission="auth.delete_user">
-                      <button 
-                        onClick={() => handleDelete(user.id)} 
+                      <button
+                        onClick={() => handleDelete(user.id)}
                         className="text-red-600 hover:text-red-900">
                         Eliminar
                       </button>
@@ -174,12 +186,12 @@ const UsersList = () => {
           </table>
         </div>
       )}
-      
+
       {/* Paginación */}
       {totalPages > 1 && (
         <div className="flex justify-center mt-6">
           <nav className="flex items-center">
-            <button 
+            <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
               className={`px-3 py-1 rounded-l ${currentPage === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200'}`}

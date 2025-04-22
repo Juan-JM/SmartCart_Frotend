@@ -44,7 +44,7 @@ const GroupForm = () => {
         setLoading(true);
         
         // Obtener todos los permisos disponibles
-        const permsResponse = await apiClient.get('/admin/permissions/');
+        const permsResponse = await apiClient.get('/usuarios/permisos/');
         
         // Organizar permisos por aplicación
         const permsByApp = {};
@@ -64,7 +64,7 @@ const GroupForm = () => {
         
         // Si estamos editando, obtener datos del grupo
         if (isEditing) {
-          const groupResponse = await apiClient.get(`/admin/groups/${id}/`);
+          const groupResponse = await apiClient.get(`/usuarios/grupos/${id}/`);
           setFormData({
             name: groupResponse.data.name,
             permissions: groupResponse.data.permissions.map(p => parseInt(p.id))
@@ -154,11 +154,11 @@ const GroupForm = () => {
       
       if (isEditing) {
         // Actualizar grupo existente
-        response = await apiClient.put(`/admin/groups/${id}/`, formData);
+        response = await apiClient.put(`/usuarios/grupos/${id}/`, formData);
         setFeedbackMsg('Grupo actualizado correctamente');
       } else {
         // Crear nuevo grupo
-        response = await apiClient.post('/admin/groups/', formData);
+        response = await apiClient.post('/usuarios/grupos/', formData);
         setFeedbackMsg('Grupo creado correctamente');
         
         // Redirigir a la lista de grupos después de crear

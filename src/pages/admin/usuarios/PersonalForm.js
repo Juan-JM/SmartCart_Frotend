@@ -31,7 +31,7 @@ const PersonalForm = () => {
     // Cargar los grupos disponibles
     const fetchGroups = async () => {
       try {
-        const response = await apiClient.get('/admin/groups/');
+        const response = await apiClient.get('/usuarios/grupos/');
         // Filtrar grupos de personal: Vendedor, Reponedor, Administrador
         const staffGroups = response.data.filter(group => 
           ['Vendedor', 'Reponedor', 'Administrador'].includes(group.name)

@@ -49,7 +49,7 @@ const Header = () => {
       <nav className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <Link to="/" className="text-2xl font-bold text-indigo-600">
-            Mi Tienda
+            Smart Cart
           </Link>
           
           <div className="flex items-center space-x-4">

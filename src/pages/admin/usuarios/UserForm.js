@@ -32,7 +32,7 @@ const UserForm = () => {
         setLoading(true);
         
         // Obtener los grupos disponibles
-        const groupsResponse = await apiClient.get('/auth/groups/');
+        const groupsResponse = await apiClient.get('/usuarios/grupos/');
         setAvailableGroups(groupsResponse.data);
         
         // Si estamos editando, cargar los datos del usuario
@@ -140,7 +140,7 @@ const UserForm = () => {
         
         // Redirigir a la lista de usuarios después de crear
         setTimeout(() => {
-          navigate('/admin/usuarios/administradores');
+          navigate('/admin/usuarios/usuarios');
         }, 2000);
       }
       
@@ -160,10 +160,10 @@ const UserForm = () => {
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">
-          {isEditing ? `Editar Usuario: ${formData.username}` : 'Nuevo Usuario Administrador'}
+          {isEditing ? `Editar Usuario: ${formData.username}` : 'Nuevo Usuario'}
         </h1>
         <button
-          onClick={() => navigate('/admin/usuarios/administradores')}
+          onClick={() => navigate('/admin/usuarios/usuarios')}
           className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
         >
           Cancelar
@@ -198,7 +198,7 @@ const UserForm = () => {
                 value={formData.username}
                 onChange={handleChange}
                 required
-                disabled={isEditing} // No permitir cambiar el username en edición
+                disabled={isEditing} 
               />
             </div>
             <div className="mb-4">

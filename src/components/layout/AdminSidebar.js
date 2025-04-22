@@ -82,8 +82,8 @@ const AdminSidebar = () => {
                 requireAll={false}
               >
                 <Link
-                  to="/admin/usuarios/administradores"
-                  className={`block p-2 hover:bg-gray-700 ${isActive('/admin/usuarios/administradores') ? 'bg-gray-700' : ''}`}
+                  to="/admin/usuarios/usuarios"
+                  className={`block p-2 hover:bg-gray-700 ${isActive('/admin/usuarios/usuarios') ? 'bg-gray-700' : ''}`}
                 >
                   Usuarios
                 </Link>

@@ -1,4 +1,3 @@
-// CheckoutPage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
@@ -8,96 +7,48 @@ import { selectCurrentUser } from '../redux/authSlice';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
-// Cargar Stripe con tu clave pública
+// IMPORTANTE: Asegúrate de que esta clave sea correcta
 const stripePromise = loadStripe('pk_test_51Q6PfFA3VhVRZlE9icPaW8KTl6aje0qhOMyJ5hxVwK6BmJeqzziM1iF6eRkO3PhttRmvdYmN8l3Qk7RB9FFbFv1c00uAf9xSsm');
 
-// Componente de Stripe simplificado para pruebas
-const SimpleCardForm = ({ currentUser }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-
-  useEffect(() => {
-    console.log("SimpleCardForm - Stripe disponible:", !!stripe);
-    console.log("SimpleCardForm - Elements disponible:", !!elements);
-    const token = localStorage.getItem('token'); // o donde almacenes tu token
-    console.log("Token disponible:", !!token);
-    if (token) {
-      console.log("Primeros 10 caracteres del token:", token.substring(0, 10) + "...");
-    }
-
-    // Verificar datos del usuario
-    if (currentUser) {
-      console.log("Usuario autenticado:", currentUser.username);
-      console.log("Perfil de cliente:", currentUser.cliente_profile ?
-        `ID: ${currentUser.cliente_profile.id}, Nombre: ${currentUser.cliente_profile.nombre}` :
-        "No tiene perfil de cliente");
-    } else {
-      console.log("Usuario no autenticado o no cargado");
-    }
-  }, [stripe, elements, currentUser]);
-
-  return (
-    <div className="p-4 border border-blue-500 bg-blue-50">
-      <p className="mb-4">Formulario de prueba de Stripe</p>
-      <div className="border border-gray-300 rounded-md p-4 bg-white mb-4" style={{ minHeight: "40px" }}>
-        <CardElement
-          options={{
-            style: {
-              base: {
-                fontSize: '16px',
-                color: '#424770',
-                '::placeholder': {
-                  color: '#aab7c4',
-                },
-              },
-              invalid: {
-                color: '#9e2146',
-              },
-            },
-          }}
-        />
-      </div>
-      <button
-        className="bg-blue-500 text-white px-4 py-2 rounded"
-        disabled={!stripe}
-      >
-        Probar Stripe
-      </button>
-    </div>
-  );
+// Opciones del CardElement para mejor visualización
+const CARD_ELEMENT_OPTIONS = {
+  style: {
+    base: {
+      color: '#32325d',
+      fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+      fontSmoothing: 'antialiased',
+      fontSize: '16px',
+      '::placeholder': {
+        color: '#aab7c4',
+      },
+    },
+    invalid: {
+      color: '#fa755a',
+      iconColor: '#fa755a',
+    },
+  },
 };
 
-// Componente para pruebas
-const TestStripeElements = ({ currentUser }) => {
-  return (
-    <div className="mt-6 p-4 border border-red-500 bg-red-50">
-      <h3 className="text-xl font-bold mb-4">Prueba de integración de Stripe</h3>
-      <Elements stripe={stripePromise}>
-        <SimpleCardForm currentUser={currentUser} />
-      </Elements>
-    </div>
-  );
-};
-
-// Componente para el formulario de pago real
-const PaymentForm = ({ clientSecret, onPaymentComplete, onError, amount, currentUser }) => {
+// Componente de formulario de pago
+const CheckoutForm = ({ clientSecret, onPaymentComplete, onError, amount }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Mostrar información de depuración
   useEffect(() => {
-    console.log("PaymentForm - Stripe disponible:", !!stripe);
-    console.log("PaymentForm - Elements disponible:", !!elements);
-    console.log("PaymentForm - ClientSecret disponible:", !!clientSecret);
-    console.log("PaymentForm - Amount:", amount);
-  }, [stripe, elements, clientSecret, amount]);
+    console.log("CheckoutForm montado");
+    console.log("Stripe disponible:", !!stripe);
+    console.log("Elements disponible:", !!elements);
+    console.log("ClientSecret:", clientSecret?.substring(0, 10) + "...");
+  }, [stripe, elements, clientSecret]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     
-    if (!stripe || !elements || !clientSecret) {
-      console.error("No se puede procesar el pago: falta stripe, elements o clientSecret");
+    if (!stripe || !elements) {
+      console.log("Stripe o elements no disponibles al enviar");
       return;
     }
 
@@ -105,7 +56,7 @@ const PaymentForm = ({ clientSecret, onPaymentComplete, onError, amount, current
     setErrorMessage('');
 
     try {
-      console.log("Iniciando confirmación de pago con Stripe");
+      console.log("Intentando confirmCardPayment con clientSecret");
       
       // Confirmar el pago con Stripe
       const result = await stripe.confirmCardPayment(clientSecret, {
@@ -117,17 +68,19 @@ const PaymentForm = ({ clientSecret, onPaymentComplete, onError, amount, current
       console.log("Resultado de confirmCardPayment:", result);
 
       if (result.error) {
-        console.error("Error en el pago:", result.error);
+        // Mostrar error al usuario
+        console.error("Error en confirmCardPayment:", result.error);
         setErrorMessage(result.error.message);
         onError(result.error.message);
       } else {
+        // El pago se procesó correctamente
         if (result.paymentIntent.status === 'succeeded') {
           console.log("Pago exitoso, notificando al backend");
+          // Informar al backend que el pago se completó
           await salesService.confirmPayment(result.paymentIntent.id);
           onPaymentComplete();
         } else {
-          console.log("Estado inesperado del pago:", result.paymentIntent.status);
-          setErrorMessage(`El pago está en estado: ${result.paymentIntent.status}`);
+          console.log("Estado del paymentIntent:", result.paymentIntent.status);
         }
       }
     } catch (error) {
@@ -146,22 +99,7 @@ const PaymentForm = ({ clientSecret, onPaymentComplete, onError, amount, current
           Información de pago
         </label>
         <div className="border border-gray-300 rounded-md p-4 bg-white">
-          <CardElement
-            options={{
-              style: {
-                base: {
-                  fontSize: '16px',
-                  color: '#424770',
-                  '::placeholder': {
-                    color: '#aab7c4',
-                  },
-                },
-                invalid: {
-                  color: '#9e2146',
-                },
-              },
-            }}
-          />
+          <CardElement options={CARD_ELEMENT_OPTIONS} />
         </div>
       </div>
       
@@ -173,12 +111,49 @@ const PaymentForm = ({ clientSecret, onPaymentComplete, onError, amount, current
       
       <button
         type="submit"
-        disabled={loading || !stripe || !clientSecret}
+        disabled={loading || !stripe}
         className="w-full bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400"
       >
-        {loading ? 'Procesando pago...' : `Pagar $${amount ? amount.toFixed(2) : '0.00'}`}
+        {loading ? 'Procesando pago...' : `Pagar $${Number(amount).toFixed(2)}`}
       </button>
     </form>
+  );
+};
+
+// Componente contenedor para Stripe Elements
+const StripePaymentForm = ({ clientSecret, onPaymentComplete, onError, amount }) => {
+  // Estado para indicar si stripePromise está resuelto
+  const [stripeLoaded, setStripeLoaded] = useState(false);
+
+  useEffect(() => {
+    // Check if Stripe has loaded
+    if (stripePromise) {
+      stripePromise.then(() => {
+        console.log("Stripe cargado correctamente");
+        setStripeLoaded(true);
+      }).catch(error => {
+        console.error("Error cargando Stripe:", error);
+      });
+    }
+  }, []);
+
+  if (!clientSecret) {
+    return <div>Esperando información de pago...</div>;
+  }
+
+  if (!stripeLoaded) {
+    return <div>Cargando procesador de pagos...</div>;
+  }
+
+  return (
+    <Elements stripe={stripePromise}>
+      <CheckoutForm 
+        clientSecret={clientSecret}
+        onPaymentComplete={onPaymentComplete}
+        onError={onError}
+        amount={amount}
+      />
+    </Elements>
   );
 };
 
@@ -192,18 +167,6 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const user = useSelector(selectCurrentUser);
 
-// 1. Primero, agregar un useEffect para verificar mejor el perfil del cliente
-// Agregar este código después de la declaración del usuario
-useEffect(() => {
-  if (user) {
-    console.log("Información completa del usuario:", user);
-    console.log("Perfil de cliente:", user.cliente_profile);
-    // Verificar la estructura exacta del perfil del cliente
-    if (user.cliente_profile) {
-      console.log("Estructura del perfil: ", Object.keys(user.cliente_profile));
-    }
-  }
-}, [user]);
   // Calculamos el total del carrito usando la estructura correcta del contexto
   const calculateTotal = () => {
     return cart.total || cart.items.reduce((total, item) => total + item.price * item.quantity, 0);
@@ -216,18 +179,13 @@ useEffect(() => {
     try {
       console.log("Iniciando proceso de checkout");
       
-      // Obtener el perfil de cliente
-      const clienteId = user?.cliente_profile?.id;
-      console.log("ID de cliente usuario todo:", user);
-
-      console.log("ID de cliente utilizado:", clienteId);
-      
       // Usar el método prepareSaleData de tu servicio
       const saleData = salesService.prepareSaleData(
         cart.items, 
-        clienteId
+        user?.cliente_profile?.id
       );
-      console.log("Datos preparados para la venta:", saleData);
+
+      console.log("Datos de venta preparados:", saleData);
 
       // Crear la nota de venta
       const responseData = await salesService.createSale(saleData);
@@ -238,34 +196,23 @@ useEffect(() => {
       }
       
       setNotaVentaId(responseData.id);
+      
+      // Mostrar el formulario de pago
       setShowPaymentForm(true);
       
-      // Verificar autorización antes de crear el intento de pago
-      const token = localStorage.getItem('token');
-      console.log("Creando intento de pago con token:", !!token);
-      
       // Crear intento de pago en Stripe
-      console.log("Solicitud de intento de pago para nota:", responseData.id);
-      try {
-        const paymentData = await salesService.createPaymentIntent(responseData.id);
-        console.log("Respuesta de intento de pago:", paymentData);
-        
-        if (!paymentData || !paymentData.clientSecret) {
-          throw new Error("No se recibió un clientSecret válido");
-        }
-        
-        setPaymentIntent({
-          clientSecret: paymentData.clientSecret,
-          amount: paymentData.amount || calculateTotal()
-        });
-      } catch (paymentError) {
-        console.error("Error al crear intento de pago:", paymentError);
-        if (paymentError.response) {
-          console.error("Respuesta del servidor:", paymentError.response.status, paymentError.response.data);
-          throw new Error(paymentError.response.data?.detail || "Error al crear el intento de pago");
-        }
-        throw paymentError;
+      console.log("Creando intento de pago para la nota:", responseData.id);
+      const paymentData = await salesService.createPaymentIntent(responseData.id);
+      console.log("Intento de pago creado:", paymentData);
+      
+      if (!paymentData || !paymentData.clientSecret) {
+        throw new Error("No se recibió un clientSecret válido");
       }
+      
+      setPaymentIntent({
+        clientSecret: paymentData.clientSecret,
+        amount: paymentData.amount || calculateTotal()
+      });
     } catch (err) {
       console.error('Error al procesar la compra:', err);
       setError(err.message || 'Error al crear la orden. Por favor, intenta nuevamente.');
@@ -276,17 +223,18 @@ useEffect(() => {
   };
 
   const handlePaymentComplete = () => {
+    // Limpiar el carrito y redirigir a una página de confirmación
     console.log("Pago completado, limpiando carrito y redirigiendo");
     clearCart();
-    navigate('/perfil'); // O redirige a donde prefieras
+    navigate('/compra-completada');
   };
 
   const handlePaymentError = (message) => {
-    console.error("Error en el pago:", message);
+    console.error("Error de pago:", message);
     setError(message);
   };
 
-  // Verificamos si el carrito está vacío
+  // Verificamos si el carrito está vacío usando la estructura correcta
   if (!cart.items || cart.items.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
@@ -304,11 +252,8 @@ useEffect(() => {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Finalizar Compra</h1>
-
-      {/* Componente de prueba de Stripe */}
-      {/* <TestStripeElements currentUser={user} /> */}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
           <h2 className="text-xl font-semibold mb-4">Resumen de la Orden</h2>
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -361,15 +306,12 @@ useEffect(() => {
               <div className="mt-4">
                 <h3 className="text-lg font-semibold mb-3">Método de Pago</h3>
                 {paymentIntent ? (
-                  <Elements stripe={stripePromise}>
-                    <PaymentForm 
-                      clientSecret={paymentIntent.clientSecret}
-                      onPaymentComplete={handlePaymentComplete}
-                      onError={handlePaymentError}
-                      amount={paymentIntent.amount}
-                      currentUser={user}
-                    />
-                  </Elements>
+                  <StripePaymentForm 
+                    clientSecret={paymentIntent.clientSecret}
+                    onPaymentComplete={handlePaymentComplete}
+                    onError={handlePaymentError}
+                    amount={paymentIntent.amount}
+                  />
                 ) : (
                   <div className="mt-4 text-center p-4 border border-gray-200 rounded">
                     <div className="animate-pulse">
@@ -382,18 +324,6 @@ useEffect(() => {
           </div>
         </div>
       </div>
-
-      {/* Información de depuración */}
-      {/* <div className="mt-8 p-4 border border-gray-300 rounded bg-gray-50">
-        <h3 className="font-bold">Información de depuración:</h3>
-        <p>stripePromise: {stripePromise ? "Cargado" : "No cargado"}</p>
-        <p>showPaymentForm: {showPaymentForm ? "Sí" : "No"}</p>
-        <p>notaVentaId: {notaVentaId || "No disponible"}</p>
-        <p>paymentIntent: {paymentIntent ? "Disponible" : "No disponible"}</p>
-        {paymentIntent && (
-          <p>clientSecret: {paymentIntent.clientSecret ? paymentIntent.clientSecret.substring(0, 10) + "..." : "No disponible"}</p>
-        )}
-      </div> */}
     </div>
   );
 };

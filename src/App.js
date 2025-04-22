@@ -20,8 +20,10 @@ import RegisterPage from './pages/RegisterPage';
 
 // Páginas que requieren autenticación
 import ProfilePage from './pages/ProfilePage';
-import CheckoutPage from './pages/CheckoutPage';
+// import CheckoutPage from './pages/CheckoutPage';
 import OrdersPage from './pages/OrdersPage';
+import CheckoutPage from './pages/CheckoutPage';
+import OrderConfirmationPage from './pages/OrderConfirmationPage';
 
 // Páginas administrativas
 import AdminLayout from './components/layout/AdminLayout';
@@ -80,10 +82,10 @@ function App() {
                 <Route path="usuarios/grupos/:id/editar" element={<GroupForm />} />
 
                 {/* Rutas de Usuarios - Administradores */}
-                <Route path="usuarios/administradores" element={<UsersList />} />
-                <Route path="usuarios/administradores/:id" element={<UserDetail />} />
-                <Route path="usuarios/administradores/nuevo" element={<UserForm />} />
-                <Route path="usuarios/administradores/:id/editar" element={<UserForm />} />
+                <Route path="usuarios/usuarios" element={<UsersList />} />
+                <Route path="usuarios/usuarios/:id" element={<UserDetail />} />
+                <Route path="usuarios/usuarios/nuevo" element={<UserForm />} />
+                <Route path="usuarios/usuarios/:id/editar" element={<UserForm />} />
 
                 {/* Rutas de Inventario */}
                 <Route path="inventario/stocks" element={<div>Stocks</div>} />
@@ -97,6 +99,7 @@ function App() {
 
                 {/* Rutas de Ventas */}
                 <Route path="ventas/notas" element={<div>Notas de Venta</div>} />
+                
               </Route>
 
               {/* Rutas Públicas */}
@@ -108,6 +111,18 @@ function App() {
               <Route path="/registro" element={<><Header /><RegisterPage /></>} />
 
               {/* Rutas Protegidas */}
+              <Route path="/checkout" element={
+                  <ProtectedRoute>
+                    <Header />
+                    <CheckoutPage />
+                  </ProtectedRoute>
+                } />
+              <Route path="/compra-completada" element={
+                  <ProtectedRoute>
+                    <Header />
+                    <OrderConfirmationPage />
+                  </ProtectedRoute>
+                } />
               <Route
                 path="/perfil"
                 element={
@@ -117,7 +132,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
+              {/* <Route
                 path="/checkout"
                 element={
                   <ProtectedRoute>
@@ -125,7 +140,7 @@ function App() {
                     <CheckoutPage />
                   </ProtectedRoute>
                 }
-              />
+              /> */}
               <Route
                 path="/ordenes"
                 element={

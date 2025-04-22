@@ -177,7 +177,7 @@ export const userService = {
   // Grupos
   getGroups: async () => {
     try {
-      const response = await apiClient.get('/admin/groups/');
+      const response = await apiClient.get('/usuarios/grupos/');
       return response.data;
     } catch (error) {
       console.error('Error al obtener grupos:', error);
@@ -187,7 +187,7 @@ export const userService = {
 
   getGroupById: async (id) => {
     try {
-      const response = await apiClient.get(`/admin/groups/${id}/`);
+      const response = await apiClient.get(`/usuarios/grupos/${id}/`);
       return response.data;
     } catch (error) {
       console.error(`Error al obtener grupo ${id}:`, error);
@@ -197,7 +197,7 @@ export const userService = {
 
   createGroup: async (groupData) => {
     try {
-      const response = await apiClient.post('/admin/groups/', groupData);
+      const response = await apiClient.post('/usuarios/grupos/', groupData);
       return response.data;
     } catch (error) {
       console.error('Error al crear grupo:', error);
@@ -207,7 +207,7 @@ export const userService = {
 
   updateGroup: async (id, groupData) => {
     try {
-      const response = await apiClient.put(`/admin/groups/${id}/`, groupData);
+      const response = await apiClient.put(`/usuarios/grupos/${id}/`, groupData);
       return response.data;
     } catch (error) {
       console.error(`Error al actualizar grupo ${id}:`, error);
@@ -217,7 +217,7 @@ export const userService = {
 
   deleteGroup: async (id) => {
     try {
-      const response = await apiClient.delete(`/admin/groups/${id}/`);
+      const response = await apiClient.delete(`/usuarios/grupos/${id}/`);
       return response.data;
     } catch (error) {
       console.error(`Error al eliminar grupo ${id}:`, error);
@@ -239,7 +239,7 @@ export const userService = {
   // Usuarios en un grupo
   getUsersInGroup: async (groupId) => {
     try {
-      const response = await apiClient.get(`/admin/groups/${groupId}/users/`);
+      const response = await apiClient.get(`/usuarios/grupos/${groupId}/users/`);
       return response.data;
     } catch (error) {
       console.error(`Error al obtener usuarios del grupo ${groupId}:`, error);
